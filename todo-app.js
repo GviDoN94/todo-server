@@ -51,7 +51,11 @@
               deleteButton = document.createElement('button'),
               doneClass = 'list-group-item-success';
     
-        item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+        item.classList.add(
+            'list-group-item',
+            'd-flex', 'justify-content-between',
+            'align-items-center'
+        );
         item.textContent = obj.name;
     
         buttonGroup.classList.add('btn-group', 'btn-group-sm');
@@ -113,7 +117,9 @@
         container.append(todoItemForm.form);
         container.append(todoList);
 
-        const response = await fetch('http://localhost:3500/api/todos'),
+        const response = await fetch(
+            ` http://localhost:3500/api/todos?owner=${title}`
+        ),
               todoItemsList = await response.json();
         
         todoItemsList.forEach(item => {
@@ -136,7 +142,7 @@
                 },
                 body: JSON.stringify({
                     name: todoItemForm.input.value.trim(),
-                    owner: 'Я',
+                    owner: title,
                     done: false
                 })
             }),
