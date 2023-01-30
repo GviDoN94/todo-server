@@ -44,7 +44,7 @@
         return list;
     }
     
-    function createTodoItemElement({name, done}) {
+    function createTodoItemElement(obj, {onDone, onDelete}) {
         const item = document.createElement('li'),
               buttonGroup = document.createElement('div'),
               doneButton = document.createElement('button'),
@@ -52,12 +52,12 @@
               doneClass = 'list-group-item-success';
     
         item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
-        item.textContent = name;
+        item.textContent = obj.name;
     
         buttonGroup.classList.add('btn-group', 'btn-group-sm');
         doneButton.classList.add('btn', 'btn-success');
         doneButton.textContent = 'Готово';
-        if (done) {
+        if (obj.done) {
             item.classList.add(doneClass);
         }
     
@@ -69,7 +69,8 @@
         item.append(buttonGroup);
     
         doneButton.addEventListener('click', () => {
-            if (!item.classList.contains(doneClass)) {
+            onDone(obj, item);
+            if (!item.classList.contains(doneClass) && obj.done) {
                 item.classList.add(doneClass);
             } else {
                 item.classList.remove(doneClass);
@@ -77,9 +78,7 @@
         });
     
         deleteButton.addEventListener('click', () => {
-            if (confirm('Вы уверены?')) {
-                item.remove();
-            }
+            onDelete(obj, item);
         });
     
         return item;
@@ -88,7 +87,27 @@
     async function createTodoApp(container, title='Список дел') {
         const todoAppTitle = createAppTitle(title),
               todoItemForm = createTodoItemForm(),
-              todoList = createTodoList();
+              todoList = createTodoList(),
+              handlers = {
+                onDone(obj, element) {
+                    obj.done = !obj.done;
+                    fetch(`http://localhost:3500/api/todos/${obj.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({done: obj.done})
+                    });
+                },
+                onDelete(obj, element) {
+                    if (confirm('Вы уверены?')) {
+                        fetch(`http://localhost:3500/api/todos/${obj.id}`, {
+                            method: 'DELETE'
+                        });
+                        element.remove();
+                    }
+                }
+              };
     
         container.append(todoAppTitle);
         container.append(todoItemForm.form);
@@ -98,7 +117,7 @@
               todoItemsList = await response.json();
         
         todoItemsList.forEach(item => {
-            const todoItemElement = createTodoItemElement(item);
+            const todoItemElement = createTodoItemElement(item, handlers);
             todoList.append(todoItemElement);
         });
     
@@ -112,17 +131,17 @@
 
             const response = await fetch('http://localhost:3500/api/todos', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     name: todoItemForm.input.value.trim(),
                     owner: 'Я',
                     done: false
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                })
             }),
                 todoItem = await response.json(),
-                todoItemElement = createTodoItemElement(todoItem);
+                todoItemElement = createTodoItemElement(todoItem, handlers);
 
             todoList.append(todoItemElement);
             todoItemForm.input.value = '';
