@@ -86,39 +86,21 @@ function createTodoItemElement(obj, {onDone, onDelete}) {
     return item;
 }
 
-async function createTodoApp(container, title='Список дел') {
+async function createTodoApp(container, {
+    title='Список дел',
+    todoItemsList = [],
+    onCreateFormSubmit,
+    onDoneClick,
+    onDeleteClick
+}) {
     const todoAppTitle = createAppTitle(title),
         todoItemForm = createTodoItemForm(),
         todoList = createTodoList(),
-        handlers = {
-            onDone(obj) {
-                obj.done = !obj.done;
-                fetch(`http://localhost:3500/api/todos/${obj.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({done: obj.done})
-                });
-            },
-            onDelete(obj, element) {
-                if (confirm('Вы уверены?')) {
-                    fetch(`http://localhost:3500/api/todos/${obj.id}`, {
-                        method: 'DELETE'
-                    });
-                    element.remove();
-                }
-            }
-        };
+        handlers = {onDone: onDoneClick, onDelete: onDeleteClick};
 
     container.append(todoAppTitle);
     container.append(todoItemForm.form);
     container.append(todoList);
-
-    const response = await fetch(
-        ` http://localhost:3500/api/todos?owner=${title}`
-    ),
-        todoItemsList = await response.json();
     
     todoItemsList.forEach(item => {
         const todoItemElement = createTodoItemElement(item, handlers);
@@ -133,18 +115,10 @@ async function createTodoApp(container, title='Список дел') {
             return;
         }
 
-        const response = await fetch('http://localhost:3500/api/todos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: todoItemForm.input.value.trim(),
-                owner: title,
-                done: false
-            })
+        const todoItem = await onCreateFormSubmit({
+            name: todoItemForm.input.value.trim(),
+            owner: title
         }),
-            todoItem = await response.json(),
             todoItemElement = createTodoItemElement(todoItem, handlers);
 
         todoList.append(todoItemElement);
