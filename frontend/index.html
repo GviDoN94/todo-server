@@ -11,32 +11,39 @@
           crossorigin="anonymous">
     <script type="module">
         import createTodoApp from './todo-app/view.js';
-        import {
-            getTodeList,
-            createTodoItem,
-            switchTodoItemDone,
-            deleteTodoItem
-        } from './todo-app/api.js';
-        document.addEventListener('DOMContentLoaded', async function() {
-            const title = 'Дела пользователя 2',
-                todoItemsList = await getTodeList(title);
-            createTodoApp(document.querySelector('#todo-app'), {
+        import switchStorage from './todo-app/switchStorage.js';
+
+        const title = 'Мои дела';
+
+        switchStorage('#switch-module-btn')
+          .then(obj => {
+            const {
+              getTodoList,
+              createTodoItem,
+              switchTodoItemDone,
+              deleteTodoItem
+            } = obj;
+            (async () => {
+              const todoItemsList = await getTodoList(title);
+              createTodoApp(document.querySelector('#todo-app'), {
                 title,
                 todoItemsList,
                 onCreateFormSubmit: createTodoItem,
                 onDoneClick: switchTodoItemDone,
                 onDeleteClick: deleteTodoItem
-            });
-        });
+              });
+            })();
+          });
     </script>
 </head>
 <body>
     <div class="container mb-5">
-        <nav class="nav">
+        <nav class="nav mb-5">
             <a href="index.html" class="nav-link">Мои дела</a>
             <a href="user-1.html" class="nav-link">Дела пользователя 1</a>
             <a href="user-2.html" class="nav-link">Дела пользователя 2</a>
         </nav>
+        <button class="btn btn-primary" id="switch-module-btn"></button>
     </div>
     <div id="todo-app" class="container"></div>
 </body>
